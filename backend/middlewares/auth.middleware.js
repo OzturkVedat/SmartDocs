@@ -6,7 +6,7 @@ const authenticateJWT = (req, res, next) => {
 
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
     console.warn("[Auth] Authorization header missing or invalid format.");
-    return res.status(401).json({ error: "Auth header is missing/invalid." });
+    return res.status(401).json({ error: "Unauthorized." });
   }
 
   const token = authHeader.split(" ")[1];
@@ -18,7 +18,7 @@ const authenticateJWT = (req, res, next) => {
   } catch (err) {
     if (err.name === "TokenExpiredError") {
       console.warn("[Auth] Token expired at:", err.expiredAt);
-      return res.status(401).json({ error: "Token expired." });
+      return res.status(401).json({ error: "Auth expired. Login again." });
     }
 
     console.error("[Auth] JWT validation error:", err.message);

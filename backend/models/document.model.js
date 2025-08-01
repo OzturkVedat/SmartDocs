@@ -3,7 +3,6 @@ const mongoose = require("mongoose");
 const documentSchema = new mongoose.Schema(
   {
     title: String,
-    content: String,
     summary: String,
     fileUrl: String,
     keywords: [String],
@@ -11,6 +10,6 @@ const documentSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-documentSchema.index({ content: "text", summary: "text", title: "text" });
+documentSchema.index({ summary: "text", title: "text" });
 
 module.exports = mongoose.model("Document", documentSchema);

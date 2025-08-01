@@ -9,6 +9,7 @@
   "scripts": {
     "start:backend": "node backend/server.js",
     "dev:backend": "nodemon backend/server.js",
+    "seed": "node backend/scripts/docs.seed.js",
     "test": "jest"
   },
   "repository": {

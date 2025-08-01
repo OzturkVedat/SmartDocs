@@ -1,6 +1,6 @@
 const Document = require("../models/document.model");
 const { uploadToS3, deleteFromS3 } = require("../services/s3.service");
-const { summarizeText, extractKeywords } = require("../services/gemini.service");
+const { summarizeText, extractKeywords, rankSummaryByRelevance } = require("../services/gemini.service");
 const { extractTextFromPdf } = require("../utils/pdfParser.util");
 
 exports.getDocumentById = async (req, res) => {
@@ -41,11 +41,44 @@ exports.searchDocuments = async (req, res) => {
     const query = req.query.q;
     if (!query) return res.status(400).json({ error: "Query required" });
 
-    const results = await Document.find({ $text: { $search: query } });
-    res.status(200).json({ results });
+    const batchSize = 100;
+    const maxDocsToConsider = 500;
+
+    let skip = 0;
+    let allRanked = [];
+
+    while (skip < maxDocsToConsider) {
+      // Fetch batch
+      const docs = await Document.find().select("_id title summary").sort({ createdAt: -1 }).skip(skip).limit(batchSize);
+      if (docs.length === 0) break; // No more docs
+
+      const ranked = await Promise.allSettled(
+        docs.map(async (doc) => {
+          const summary = doc.summary?.trim() || "Bu dokümanın özeti mevcut değil.";
+          const score = await rankSummaryByRelevance(query, summary);
+          return {
+            id: doc._id,
+            title: doc.title,
+            summary,
+            relevance: score,
+          };
+        })
+      );
+
+      // Filter out failed
+      const successful = ranked.filter((r) => r.status === "fulfilled").map((r) => r.value);
+      allRanked.push(...successful);
+      skip += batchSize;
+    }
+
+    allRanked.sort((a, b) => b.relevance - a.relevance);
+    res.status(200).json({
+      query,
+      results: allRanked.slice(0, 10),
+    });
   } catch (err) {
-    console.error("Search error:", err);
-    res.status(500).json({ error: err.message });
+    console.error("Semantic search error:", err.message);
+    res.status(500).json({ error: "Failed to perform semantic search." });
   }
 };
 
@@ -72,28 +105,22 @@ exports.uploadDocument = async (req, res) => {
     const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
     if (file.size > MAX_FILE_SIZE) return res.status(400).json({ error: "PDF file is too large (max 5MB)." });
 
-    const { text, pageCount } = await extractTextFromPdf(file.buffer);
-    if (pageCount > 30) return res.status(400).json({ error: "PDF has too many pages (max 30)." });
+    const { text } = await extractTextFromPdf(file.buffer);
 
-    const summary = await summarizeText(text);
+    const [summary, keywords] = await Promise.all([summarizeText(text), extractKeywords(text)]);
     const s3Url = await uploadToS3(file);
 
     const newDoc = await Document.create({
       title: file.originalname,
-      content: text,
       summary,
+      keywords,
       fileUrl: s3Url,
     });
 
-    res.status(201).json({
-      id: newDoc._id,
-      title: newDoc.title,
-      summary: newDoc.summary,
-      fileUrl: newDoc.fileUrl,
-    });
+    res.status(201).json({ message: "Doküman yüklendi", newDoc });
   } catch (err) {
     console.error("Upload error:", err);
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: "Server error while uploading." });
   }
 };
 

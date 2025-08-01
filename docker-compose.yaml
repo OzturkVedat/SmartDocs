@@ -23,9 +23,11 @@ services:
     depends_on:
       - mongo
     volumes:
-      - ./backend:/app
-      - backend_node_modules:/app/node_modules
+      - .:/app
+      - /app/node_modules
     restart: always
+    working_dir: /app
+    command: node backend/server.js
 
 volumes:
   mongo-data:

@@ -20,3 +20,20 @@ exports.extractKeywords = async (text) => {
     .map((k) => k.trim())
     .filter((k) => k.length > 0);
 };
+
+exports.rankSummaryByRelevance = async (query, summary) => {
+  const prompt = `
+Kullanıcının arama sorgusu: "${query}"
+Doküman Özeti:
+"${summary}"
+Bu özet bu aramayla ne kadar alakalı? Yalnızca tek satırda, 0 (alakasız) ile 10 (oldukça alakalı) arasında bir sayı ver. Açıklama yapma. Yanıt sadece sayısal değer olmalı.
+`.trim();
+
+  const result = await model.generateContent(prompt);
+  const response = await result.response.text();
+  console.log("Model response:", response);
+
+  const scoreMatch = response.trim().match(/^([0-9](?:\.[0-9]+)?|10)$/);
+  const score = scoreMatch ? parseFloat(scoreMatch[1]) : 0;
+  return score;
+};

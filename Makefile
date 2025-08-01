@@ -1,6 +1,9 @@
 build:
 	docker-compose up --build
 
+seed:
+	docker-compose exec backend npm run seed
+
 down:
 	docker-compose down -v --remove-orphans
 
