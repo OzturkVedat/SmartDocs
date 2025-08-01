@@ -1,0 +1,32 @@
+services:
+  mongo:
+    image: mongo:7
+    command: ["mongod", "--config", "/etc/mongo/mongo.conf"]
+    restart: always
+    container_name: smartdocs-mongo
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: secret123
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+      - ./mongo.conf:/etc/mongo/mongo.conf:ro
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    ports:
+      - "5000:5000"
+    env_file:
+      - .env
+    depends_on:
+      - mongo
+    volumes:
+      - ./backend:/app
+      - backend_node_modules:/app/node_modules
+    restart: always
+
+volumes:
+  mongo-data:
+  backend_node_modules:

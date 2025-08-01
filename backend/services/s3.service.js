@@ -1,4 +1,4 @@
-const { S3Client, PutObjectCommand } = require("@aws-sdk/client-s3");
+const { S3Client, PutObjectCommand, DeleteObjectCommand } = require("@aws-sdk/client-s3");
 const { v4: uuidv4 } = require("uuid");
 
 const s3 = new S3Client({
@@ -24,4 +24,15 @@ exports.uploadToS3 = async (file) => {
   await s3.send(new PutObjectCommand(params));
 
   return `https://${process.env.S3_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${filename}`;
+};
+
+exports.deleteFromS3 = async (fileUrl) => {
+  const bucketName = process.env.S3_BUCKET_NAME;
+  const key = new URL(fileUrl).pathname.slice(1);
+  const command = new DeleteObjectCommand({
+    Bucket: bucketName,
+    Key: key,
+  });
+
+  await s3.send(command);
 };
