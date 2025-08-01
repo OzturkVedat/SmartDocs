@@ -1,22 +1,22 @@
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+const model = genAI.getGenerativeModel({ model: "gemini-2.5-pro" });
 
 exports.summarizeText = async (text) => {
-  const model = genAI.getGenerativeModel({ model: "gemini-pro" });
-
-  const result = await model.generateContent(`Lütfen bu metni özetle (en fazla 10 cümle olsun): ${text}`);
-  const response = await result.response;
-  return response.text();
+  const prompt = `Metni akademik bir dille özetle. Sadece özet içeriğini üret. “İşte özet” gibi ifadeler yazma. En fazla 10 cümle kullan:\n\n${text}`;
+  const result = await model.generateContent(prompt);
+  return result.response.text();
 };
 
 exports.extractKeywords = async (text) => {
-  const model = genAI.getGenerativeModel({ model: "gemini-pro" });
-
-  const prompt = `Metinden en önemli anahtar kelimeleri (en fazla 10) virgülle ayrılmış şekilde çıkar: ${text}`;
+  const prompt = `Metinden en önemli anahtar kelimeleri (en fazla 10) virgülle ayrılmış şekilde çıkar ve bana sadece bu anahtar kelimeleri ver: ${text}`;
   const result = await model.generateContent(prompt);
 
   const response = await result.response;
   const textOutput = await response.text();
-  return textOutput.split(",").map((k) => k.trim());
+  return textOutput
+    .split(/,|\n|;/)
+    .map((k) => k.trim())
+    .filter((k) => k.length > 0);
 };

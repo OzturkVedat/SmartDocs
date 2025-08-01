@@ -4,12 +4,17 @@ const multer = require("multer");
 const upload = multer();
 
 const documentController = require("../controllers/document.controller");
+const authenticateJWT = require("../middlewares/auth.middleware");
+
+router.use(authenticateJWT);
 
 /**
  * @swagger
  * /api/document:
  *   get:
  *     summary: List paginated documents
+ *     security:
+ *       - bearerAuth: []
  *     tags: [Documents]
  *     parameters:
  *       - in: query
@@ -35,6 +40,8 @@ router.get("/", documentController.listDocuments);
  * /api/document/search:
  *   get:
  *     summary: Search documents using natural language query
+ *     security:
+ *       - bearerAuth: []
  *     tags: [Documents]
  *     parameters:
  *       - in: query
@@ -56,6 +63,8 @@ router.get("/search", documentController.searchDocuments);
  * /api/document/{id}:
  *   get:
  *     summary: Get a document by ID
+ *     security:
+ *       - bearerAuth: []
  *     tags: [Documents]
  *     parameters:
  *       - in: path
@@ -77,6 +86,8 @@ router.get("/:id", documentController.getDocumentById);
  * /api/document/{id}/keywords:
  *   get:
  *     summary: Extract keywords from a document
+ *     security:
+ *       - bearerAuth: []
  *     tags: [Documents]
  *     parameters:
  *       - in: path
@@ -98,6 +109,8 @@ router.get("/:id/keywords", documentController.extractDocumentKeywords);
  * /api/document:
  *   post:
  *     summary: Upload a PDF document
+ *     security:
+ *       - bearerAuth: []
  *     tags: [Documents]
  *     requestBody:
  *       required: true
@@ -125,6 +138,8 @@ router.post("/", upload.single("file"), documentController.uploadDocument);
  * /api/document/{id}:
  *   delete:
  *     summary: Delete a document by ID
+ *     security:
+ *       - bearerAuth: []
  *     tags: [Documents]
  *     parameters:
  *       - in: path

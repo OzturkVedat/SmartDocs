@@ -18,7 +18,6 @@ exports.uploadToS3 = async (file) => {
     Key: filename,
     Body: file.buffer,
     ContentType: file.mimetype,
-    ACL: "public-read",
   };
 
   await s3.send(new PutObjectCommand(params));

@@ -69,13 +69,18 @@ exports.uploadDocument = async (req, res) => {
     if (!file) return res.status(400).json({ error: "No file uploaded" });
     if (file.mimetype !== "application/pdf") return res.status(400).json({ error: "Only PDF files allowed" });
 
-    const textContent = await extractTextFromPdf(file.buffer);
-    const summary = await summarizeText(textContent);
+    const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+    if (file.size > MAX_FILE_SIZE) return res.status(400).json({ error: "PDF file is too large (max 5MB)." });
 
+    const { text, pageCount } = await extractTextFromPdf(file.buffer);
+    if (pageCount > 30) return res.status(400).json({ error: "PDF has too many pages (max 30)." });
+
+    const summary = await summarizeText(text);
     const s3Url = await uploadToS3(file);
+
     const newDoc = await Document.create({
       title: file.originalname,
-      content: textContent,
+      content: text,
       summary,
       fileUrl: s3Url,
     });

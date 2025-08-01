@@ -10,6 +10,16 @@ const options = {
       description: "SmartDocs API Doc",
     },
     servers: [{ url: process.env.SERVER_URL || "http://localhost:5000" }],
+
+    components: {
+      securitySchemes: {
+        bearerAuth: {
+          type: "http",
+          scheme: "bearer",
+          bearerFormat: "JWT",
+        },
+      },
+    },
   },
   apis: ["./routes/*.js"],
 };
