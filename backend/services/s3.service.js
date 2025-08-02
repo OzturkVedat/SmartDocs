@@ -1,4 +1,6 @@
-const { S3Client, PutObjectCommand, DeleteObjectCommand } = require("@aws-sdk/client-s3");
+const { S3Client, GetObjectCommand, PutObjectCommand, DeleteObjectCommand } = require("@aws-sdk/client-s3");
+const { getSignedUrl } = require("@aws-sdk/s3-request-presigner");
+
 const { v4: uuidv4 } = require("uuid");
 
 const s3 = new S3Client({
@@ -23,6 +25,16 @@ exports.uploadToS3 = async (file) => {
   await s3.send(new PutObjectCommand(params));
 
   return `https://${process.env.S3_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${filename}`;
+};
+
+exports.getSignedS3Url = async (key) => {
+  const command = new GetObjectCommand({
+    Bucket: process.env.S3_BUCKET_NAME,
+    Key: key,
+  });
+
+  const signedUrl = await getSignedUrl(s3, command, { expiresIn: 60 * 5 }); // 5 minutes
+  return signedUrl;
 };
 
 exports.deleteFromS3 = async (fileUrl) => {

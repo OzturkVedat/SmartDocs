@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { Form, Button, Container, Alert } from "react-bootstrap";
+import { useNavigate } from "react-router-dom";
+
 import { login } from "../api/authService";
 
 export default function LoginPage() {
@@ -8,13 +10,16 @@ export default function LoginPage() {
 
   const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
 
+  const navigate = useNavigate();
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
       const res = await login(form);
+      console.log("Login response:", res);
       localStorage.setItem("token", res.data.token);
-      setStatus({ type: "success", message: "Login successful!" });
+      navigate("/dashboard");
     } catch (err) {
+      console.error("Login error:", err);
       setStatus({ type: "danger", message: err.response?.data?.message || "Login failed." });
     }
   };
@@ -33,6 +38,9 @@ export default function LoginPage() {
           <Form.Control type="password" name="password" value={form.password} onChange={handleChange} required />
         </Form.Group>
         <Button type="submit">Login</Button>
+        <p className="mt-3">
+          Don't have an account? <a href="/register">Register</a>
+        </p>
       </Form>
     </Container>
   );

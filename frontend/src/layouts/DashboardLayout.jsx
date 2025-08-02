@@ -1,27 +1,39 @@
-import { Container, Row, Col, Nav } from "react-bootstrap";
-import { Link, Outlet } from "react-router-dom";
+import { Container, Nav } from "react-bootstrap";
+import { Link, Outlet, useLocation } from "react-router-dom";
 
 export default function DashboardLayout() {
+  const location = useLocation();
+
   return (
-    <Container fluid>
-      <Row>
-        <Col xs={2} className="bg-light min-vh-100 p-3">
+    <div className="d-flex flex-column min-vh-100">
+      {/* Header */}
+      <header className="bg-dark text-white py-2 px-4 d-flex justify-content-between align-items-center">
+        <h5 className="mb-0">Document Panel</h5>
+        <span className="small">Logged in</span>
+      </header>
+
+      {/* Main layout: Sidebar + Page content */}
+      <div className="d-flex flex-grow-1">
+        {/* Sidebar */}
+        <aside style={{ width: "240px" }} className="bg-light border-end p-3 d-flex flex-column">
           <Nav className="flex-column">
-            <Nav.Link as={Link} to="/">
+            <Nav.Link as={Link} to="/dashboard" active={location.pathname === "/dashboard"}>
               Documents
             </Nav.Link>
-            <Nav.Link as={Link} to="/upload">
-              Upload
+            <Nav.Link as={Link} to="/dashboard/upload" active={location.pathname === "/dashboard/upload"}>
+              Upload Document
             </Nav.Link>
-            <Nav.Link as={Link} to="/search">
-              Search
+            <Nav.Link as={Link} to="/dashboard/search" active={location.pathname === "/dashboard/search"}>
+              Semantic Search
             </Nav.Link>
           </Nav>
-        </Col>
-        <Col xs={10} className="p-4">
+        </aside>
+
+        {/* Main Content */}
+        <main className="p-4 flex-grow-1">
           <Outlet />
-        </Col>
-      </Row>
-    </Container>
+        </main>
+      </div>
+    </div>
   );
 }

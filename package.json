@@ -26,6 +26,8 @@
   "homepage": "https://github.com/OzturkVedat/SmartDocs#readme",
   "dependencies": {
     "@aws-sdk/client-s3": "^3.856.0",
+    "@aws-sdk/s3-request-presigner": "^3.859.0",
+    "@babel/eslint-parser": "^7.28.0",
     "@google/generative-ai": "^0.24.1",
     "bcrypt": "^6.0.0",
     "cors": "^2.8.5",

@@ -20,4 +20,4 @@ debug:
 	node --inspect backend/server.js
 
 run:
-	npx nodemon backend/server.js
+	cd frontend && npm run dev	

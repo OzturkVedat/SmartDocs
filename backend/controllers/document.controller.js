@@ -1,5 +1,5 @@
 const Document = require("../models/document.model");
-const { uploadToS3, deleteFromS3 } = require("../services/s3.service");
+const { uploadToS3, getSignedS3Url, deleteFromS3 } = require("../services/s3.service");
 const { summarizeText, extractKeywords, rankSummaryByRelevance } = require("../services/gemini.service");
 const { extractTextFromPdf } = require("../utils/pdfParser.util");
 
@@ -7,12 +7,21 @@ exports.getDocumentById = async (req, res) => {
   try {
     const doc = await Document.findById(req.params.id);
     if (!doc) return res.status(404).json({ error: "Document not found" });
-    res.status(200).json(doc);
+
+    const key = extractKeyFromS3Url(doc.fileUrl);
+    const signedUrl = await getSignedS3Url(key);
+
+    res.status(200).json({ ...doc.toObject(), fileUrl: signedUrl });
   } catch (err) {
     console.error("Fetch error:", err);
     res.status(500).json({ error: err.message });
   }
 };
+
+function extractKeyFromS3Url(url) {
+  const parts = url.split(".amazonaws.com/");
+  return parts[1]; // after the domain
+}
 
 exports.listDocuments = async (req, res) => {
   try {
@@ -65,13 +74,14 @@ exports.searchDocuments = async (req, res) => {
         })
       );
 
-      // Filter out failed
       const successful = ranked.filter((r) => r.status === "fulfilled").map((r) => r.value);
       allRanked.push(...successful);
       skip += batchSize;
     }
 
     allRanked.sort((a, b) => b.relevance - a.relevance);
+    allRanked = allRanked.filter((item) => item.relevance > 0); // filter out the irrelevants
+
     res.status(200).json({
       query,
       results: allRanked.slice(0, 10),
@@ -84,10 +94,13 @@ exports.searchDocuments = async (req, res) => {
 
 exports.extractDocumentKeywords = async (req, res) => {
   try {
-    const doc = await Document.findById(req.params.id);
+    const doc = await Document.findById(req.params.id).select("summary");
     if (!doc) return res.status(404).json({ error: "Document not found" });
 
-    const keywords = await extractKeywords(doc.content);
+    const baseText = doc.summary?.trim();
+    if (!baseText) return res.status(400).json({ error: "Document has no summary to extract keywords from." });
+
+    const keywords = await extractKeywords(baseText);
 
     res.status(200).json({ id: doc._id, keywords });
   } catch (err) {
