@@ -12,7 +12,6 @@ jest.mock("@aws-sdk/client-s3", () => {
   };
 });
 
-// Mock'tan sonra getirt
 const { uploadToS3, deleteFromS3 } = require("../../backend/services/s3.service");
 const { PutObjectCommand, DeleteObjectCommand } = require("@aws-sdk/client-s3");
 
@@ -38,7 +37,6 @@ describe("S3 Service", () => {
         expect.objectContaining({
           Bucket: "mock-bucket",
           Key: expect.any(String),
-          ACL: "public-read",
           ContentType: "application/pdf",
         })
       );

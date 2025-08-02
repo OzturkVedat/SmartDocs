@@ -12,7 +12,11 @@ const registerUser = async ({ name, email, password }) => {
   const hashed = await hashPassword(password);
   const user = await User.create({ name, email, password: hashed });
 
-  return user;
+  return {
+    id: user._id,
+    name: user.name,
+    email: user.email,
+  };
 };
 
 const loginUser = async ({ email, password }) => {
